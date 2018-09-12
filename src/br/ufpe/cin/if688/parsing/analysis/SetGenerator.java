@@ -13,14 +13,14 @@ public final class SetGenerator {
 
         Map<Nonterminal, Set<GeneralSymbol>> first = initializeNonterminalMapping(g);
 
-        Set<GeneralSymbol> firsts;
+        Set<GeneralSymbol> firstTemp;
         Collection<Production> rules = g.getProductions();
         List<GeneralSymbol> stack;
         List<Integer> indexes;
         int index;
 
         for (Production e: rules) {
-            firsts = new HashSet<>();
+            firstTemp = new HashSet<>();
             stack = new ArrayList<>();
             indexes = new ArrayList<>();
             stack.add(e.getNonterminal());
@@ -31,7 +31,7 @@ public final class SetGenerator {
             while (!(stack.isEmpty() && index >= stack.size())) {
                 if (stack.get(index) instanceof Nonterminal) {
                     if (!first.get(stack.get(index)).isEmpty()){
-                        firsts.addAll(first.get(e.getNonterminal()));
+                        firstTemp.addAll(first.get(e.getNonterminal()));
                     } else {
                         for (Production p : rules) {
                             if (p.getNonterminal() == stack.get(index)) {
@@ -43,12 +43,12 @@ public final class SetGenerator {
                     index++;
                 } else {
                     if (!first.get(e.getNonterminal()).isEmpty()){
-                        firsts.addAll(first.get(e.getNonterminal()));
+                        firstTemp.addAll(first.get(e.getNonterminal()));
                     }
-                    firsts.add(stack.get(index));
+                    firstTemp.add(stack.get(index));
                     index++;
                     if (index >= stack.size()) {
-                        if (firsts.contains(SpecialSymbol.EPSILON)) {
+                        if (firstTemp.contains(SpecialSymbol.EPSILON)) {
                             GeneralSymbol aux;
                             int auxiliary;
                             do {
@@ -68,7 +68,7 @@ public final class SetGenerator {
                                                     indexes.clear();
                                                     break;
                                                 } else {
-                                                    firsts.remove(SpecialSymbol.EPSILON);
+                                                    firstTemp.remove(SpecialSymbol.EPSILON);
                                                     stack.add(h.getProduction().get(auxiliary));
                                                     indexes.add(auxiliary);
                                                 }
@@ -84,7 +84,7 @@ public final class SetGenerator {
                     }
                 }
             }
-            first.put(e.getNonterminal(),firsts);
+            first.put(e.getNonterminal(),firstTemp);
         }
         System.out.println(first);
 
@@ -100,9 +100,43 @@ public final class SetGenerator {
 
         Map<Nonterminal, Set<GeneralSymbol>> follow = initializeNonterminalMapping(g);
 
-        /*
-         * implemente aqui o método para retornar o conjunto follow
-         */
+        Set<GeneralSymbol> followTemp;
+        Collection<Production> rules = g.getProductions();
+        List<GeneralSymbol> stack;
+        List<Integer> indexes;
+        List<Integer> maximus;
+        int index;
+
+        System.out.println(rules);
+
+        for (Production e : rules) {
+            followTemp = new HashSet<>();
+            stack = new ArrayList<>();
+            indexes = new ArrayList<>();
+            maximus = new ArrayList<>();
+            index =0;
+
+            if (g.getStartSymbol()==e.getNonterminal()){
+                followTemp.add(SpecialSymbol.EOF);
+            }
+
+            for (Production p : rules) {
+                if (p.getProduction().contains(e.getNonterminal())){
+                    indexes.add(p.getProduction().indexOf(e.getNonterminal()));
+                    stack.add(p.getNonterminal());
+                }
+            }
+
+            System.out.println(stack);
+
+            while (!(stack.isEmpty() && index >= stack.size())) {
+                if () {
+
+                }
+            }
+
+            follow.put(e.getNonterminal(),followTemp);
+        }
 
         return follow;
     }

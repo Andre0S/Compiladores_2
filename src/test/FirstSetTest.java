@@ -18,7 +18,7 @@ import br.ufpe.cin.if688.parsing.grammar.Terminal;
 import junit.framework.TestCase;
 
 public class FirstSetTest extends TestCase {
-
+	
 	public void testFirstSetG1() {
 		/*
 		 * Gramática de exemplo:
