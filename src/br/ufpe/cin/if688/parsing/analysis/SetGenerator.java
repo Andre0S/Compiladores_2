@@ -14,26 +14,79 @@ public final class SetGenerator {
         Map<Nonterminal, Set<GeneralSymbol>> first = initializeNonterminalMapping(g);
 
         Set<GeneralSymbol> firsts;
-        List<GeneralSymbol> productions;
-        Nonterminal variable;
         Collection<Production> rules = g.getProductions();
+        List<GeneralSymbol> stack;
+        List<Integer> indexes;
+        int index;
 
         for (Production e: rules) {
             firsts = new HashSet<>();
-            variable = e.getNonterminal();
-            productions = e.getProduction();
-            GeneralSymbol s = productions.get(0);
-            while (!(s instanceof Nonterminal)) {
-                for (Production p : rules) {
-                    if (p.getNonterminal() == s && variable != p.getNonterminal()) {
-                        s = p.getProduction().get(0);
+            stack = new ArrayList<>();
+            indexes = new ArrayList<>();
+            stack.add(e.getNonterminal());
+            indexes.add(0);
+            stack.add(e.getProduction().get(0));
+            indexes.add(0);
+            index = 1;
+            while (!(stack.isEmpty() && index >= stack.size())) {
+                if (stack.get(index) instanceof Nonterminal) {
+                    if (!first.get(stack.get(index)).isEmpty()){
+                        firsts.addAll(first.get(e.getNonterminal()));
+                    } else {
+                        for (Production p : rules) {
+                            if (p.getNonterminal() == stack.get(index)) {
+                                stack.add(p.getProduction().get(0));
+                                indexes.add(0);
+                            }
+                        }
+                    }
+                    index++;
+                } else {
+                    if (!first.get(e.getNonterminal()).isEmpty()){
+                        firsts.addAll(first.get(e.getNonterminal()));
+                    }
+                    firsts.add(stack.get(index));
+                    index++;
+                    if (index >= stack.size()) {
+                        if (firsts.contains(SpecialSymbol.EPSILON)) {
+                            GeneralSymbol aux;
+                            int auxiliary;
+                            do {
+                                aux = stack.remove(stack.size()-1);
+                                auxiliary = indexes.remove(indexes.size()-1);
+                                index--;
+                            } while (!(aux instanceof Nonterminal));
+                            if (aux != e.getNonterminal()) {
+                                for (Production p : rules) {
+                                    if (auxiliary < p.getProduction().size() && p.getProduction().get(auxiliary) == aux) {
+                                        auxiliary++;
+                                        aux = p.getNonterminal();
+                                        for (Production h : rules) {
+                                            if (h.getNonterminal() == aux) {
+                                                if (auxiliary >= h.getProduction().size()) {
+                                                    stack.clear();
+                                                    indexes.clear();
+                                                    break;
+                                                } else {
+                                                    firsts.remove(SpecialSymbol.EPSILON);
+                                                    stack.add(h.getProduction().get(auxiliary));
+                                                    indexes.add(auxiliary);
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        } else {
+                            stack.clear();
+                            indexes.clear();
+                        }
                     }
                 }
             }
-            firsts.add(s);
-            first.put(variable,firsts);
-            System.out.println(first);
+            first.put(e.getNonterminal(),firsts);
         }
+        System.out.println(first);
 
         return first;
 
