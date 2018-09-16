@@ -28,7 +28,7 @@ public final class SetGenerator {
             stack.add(e.getProduction().get(0));
             indexes.add(0);
             index = 1;
-            while (!(stack.isEmpty() && index >= stack.size())) {
+            while (!(index >= stack.size())) {
                 if (stack.get(index) instanceof Nonterminal) {
                     if (!first.get(stack.get(index)).isEmpty()){
                         firstTemp.addAll(first.get(e.getNonterminal()));
@@ -86,7 +86,7 @@ public final class SetGenerator {
             }
             first.put(e.getNonterminal(),firstTemp);
         }
-        System.out.println(first);
+        //System.out.println(first);
 
         return first;
 
@@ -102,18 +102,16 @@ public final class SetGenerator {
 
         Set<GeneralSymbol> followTemp;
         Collection<Production> rules = g.getProductions();
-        List<GeneralSymbol> stack;
+        List<Production> stack;
         List<Integer> indexes;
-        List<Integer> maximus;
         int index;
 
-        System.out.println(rules);
+        //System.out.println(rules);
 
         for (Production e : rules) {
             followTemp = new HashSet<>();
             stack = new ArrayList<>();
             indexes = new ArrayList<>();
-            maximus = new ArrayList<>();
             index =0;
 
             if (g.getStartSymbol()==e.getNonterminal()){
@@ -123,16 +121,58 @@ public final class SetGenerator {
             for (Production p : rules) {
                 if (p.getProduction().contains(e.getNonterminal())){
                     indexes.add(p.getProduction().indexOf(e.getNonterminal()));
-                    stack.add(p.getNonterminal());
+                    stack.add(p);
                 }
             }
 
-            System.out.println(stack);
-
-            while (!(stack.isEmpty() && index >= stack.size())) {
-                if () {
-
+            while (!(index >= stack.size())) {
+                if (indexes.get(index) >= (stack.get(index).getProduction().size() -1)) {
+                    if ((stack.get(index).getProduction().get(indexes.get(index)) != stack.get(index).getNonterminal())){
+                        if (follow.get(stack.get(index).getNonterminal()).isEmpty()) {
+                            for (Production p : rules) {
+                                if (p.getProduction().contains(stack.get(index).getNonterminal())){
+                                    indexes.add(p.getProduction().indexOf(stack.get(index).getNonterminal()));
+                                    stack.add(p);
+                                }
+                            }
+                        } else {
+                            followTemp.addAll(follow.get(stack.get(index).getNonterminal()));
+                        }
+                    }
+                } else {
+                    GeneralSymbol auxiliary = stack.get(index).getProduction().get(indexes.get(index) + 1);
+                    if (auxiliary instanceof Nonterminal) {
+                        if (first.get(auxiliary).isEmpty()) {
+                            for (Production p : rules) {
+                                if (p.getProduction().contains(auxiliary)){
+                                    indexes.add(p.getProduction().indexOf(auxiliary));
+                                    stack.add(p);
+                                }
+                            }
+                        } else {
+                            if (first.get(auxiliary).contains(SpecialSymbol.EPSILON)) {
+                                if ((indexes.get(index)+2) > (stack.get(index).getProduction().size() -1)) {
+                                    for (Production p : rules) {
+                                        if (p.getProduction().contains(stack.get(index).getNonterminal())){
+                                            indexes.add(p.getProduction().indexOf(stack.get(index).getNonterminal()));
+                                            stack.add(p);
+                                        }
+                                    }
+                                } else {
+                                    indexes.add(indexes.get(index) + 1);
+                                    stack.add(stack.get(index));
+                                }
+                                followTemp.addAll(first.get(auxiliary));
+                                followTemp.remove(SpecialSymbol.EPSILON);
+                            } else {
+                                followTemp.addAll(first.get(auxiliary));
+                            }
+                        }
+                    } else {
+                        followTemp.add(auxiliary);
+                    }
                 }
+                index++;
             }
 
             follow.put(e.getNonterminal(),followTemp);
