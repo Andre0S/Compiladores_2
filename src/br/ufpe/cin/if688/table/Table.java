@@ -20,9 +20,50 @@ public final class Table {
         Map<LL1Key, List<GeneralSymbol>> parsingTable =
                 new HashMap<LL1Key, List<GeneralSymbol>>();
 
-        /*
-         * Implemente aqui o método para retornar a parsing table
-         */
+        Collection<Production> rules = g.getProductions();
+        Set<GeneralSymbol> fstflwTemp;
+        List<Production> rulesTemp;
+        List<GeneralSymbol> stack;
+        List<Integer> indexes;
+        int index;
+
+        for (Production p : rules) {
+            if (p.getProduction().contains(SpecialSymbol.EPSILON)){
+                fstflwTemp = follow.get(p.getNonterminal());
+                for (GeneralSymbol s : fstflwTemp) {
+                    parsingTable.put(new LL1Key(p.getNonterminal(),s),p.getProduction());
+                }
+            } else {
+                stack = new ArrayList<>();
+                indexes = new ArrayList<>();
+                stack.add(p.getNonterminal());
+                indexes.add(0);
+                stack.add(p.getProduction().get(0));
+                indexes.add(0);
+                index = 1;
+                while (!(index >= stack.size())) {
+                    if (stack.get(index) instanceof Nonterminal) {
+                        for (Production e : rules) {
+                            if (e.getNonterminal() == stack.get(index)) {
+                                stack.add(e.getProduction().get(0));
+                                indexes.add(0);
+                            }
+                        }
+                        index++;
+                    } else if (stack.get(index) instanceof SpecialSymbol) {
+                        index++;
+                    } else {
+                        parsingTable.put(new LL1Key(p.getNonterminal(),stack.get(index)),p.getProduction());
+                        index = stack.size();
+                    }
+                }
+            }
+        }
+
+        System.out.println(g);
+        System.out.println(first);
+        System.out.println(follow);
+        System.out.println(parsingTable);
 
         return parsingTable;
     }

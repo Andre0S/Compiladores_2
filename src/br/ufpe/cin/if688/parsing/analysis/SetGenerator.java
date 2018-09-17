@@ -86,6 +86,7 @@ public final class SetGenerator {
             }
             first.put(e.getNonterminal(),firstTemp);
         }
+
         //System.out.println(first);
 
         return first;
@@ -177,6 +178,8 @@ public final class SetGenerator {
 
             follow.put(e.getNonterminal(),followTemp);
         }
+
+        //System.out.println(follow);
 
         return follow;
     }
