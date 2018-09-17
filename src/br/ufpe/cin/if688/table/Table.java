@@ -22,7 +22,6 @@ public final class Table {
 
         Collection<Production> rules = g.getProductions();
         Set<GeneralSymbol> fstflwTemp;
-        List<Production> rulesTemp;
         List<GeneralSymbol> stack;
         List<Integer> indexes;
         int index;
@@ -60,7 +59,7 @@ public final class Table {
             }
         }
 
-        System.out.println(g);
+        System.out.print(g);
         System.out.println(first);
         System.out.println(follow);
         System.out.println(parsingTable);
