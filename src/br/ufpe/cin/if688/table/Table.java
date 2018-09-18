@@ -22,38 +22,36 @@ public final class Table {
 
         Collection<Production> rules = g.getProductions();
         Set<GeneralSymbol> fstflwTemp;
-        List<GeneralSymbol> stack;
+        List<GeneralSymbol> listToDo;
         List<Integer> indexes;
         int index;
 
         for (Production p : rules) {
-            if (p.getProduction().contains(SpecialSymbol.EPSILON)){
+            if (p.getProduction().contains(SpecialSymbol.EPSILON)){//Caso especial caso a regra produza epsilon eu adiciono-a para todos os simbolos de follow
                 fstflwTemp = follow.get(p.getNonterminal());
                 for (GeneralSymbol s : fstflwTemp) {
                     parsingTable.put(new LL1Key(p.getNonterminal(),s),p.getProduction());
                 }
             } else {
-                stack = new ArrayList<>();
+                listToDo = new ArrayList<>();
                 indexes = new ArrayList<>();
-                stack.add(p.getNonterminal());
+                listToDo.add(p.getProduction().get(0));
                 indexes.add(0);
-                stack.add(p.getProduction().get(0));
-                indexes.add(0);
-                index = 1;
-                while (!(index >= stack.size())) {
-                    if (stack.get(index) instanceof Nonterminal) {
+                index = 0;
+                while (!(index >= listToDo.size())) {//Caso do cálculo do first sem a existência do epsilon
+                    if (listToDo.get(index) instanceof Nonterminal) {
                         for (Production e : rules) {
-                            if (e.getNonterminal() == stack.get(index)) {
-                                stack.add(e.getProduction().get(0));
+                            if (e.getNonterminal() == listToDo.get(index)) {
+                                listToDo.add(e.getProduction().get(0));
                                 indexes.add(0);
                             }
                         }
                         index++;
-                    } else if (stack.get(index) instanceof SpecialSymbol) {
+                    } else if (listToDo.get(index) instanceof SpecialSymbol) {
                         index++;
                     } else {
-                        parsingTable.put(new LL1Key(p.getNonterminal(),stack.get(index)),p.getProduction());
-                        index = stack.size();
+                        parsingTable.put(new LL1Key(p.getNonterminal(),listToDo.get(index)),p.getProduction());
+                        index = listToDo.size();
                     }
                 }
             }

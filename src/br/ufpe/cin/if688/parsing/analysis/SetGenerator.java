@@ -13,63 +13,61 @@ public final class SetGenerator {
 
         Map<Nonterminal, Set<GeneralSymbol>> first = initializeNonterminalMapping(g);
 
-        Set<GeneralSymbol> firstTemp;
-        Collection<Production> rules = g.getProductions();
-        List<GeneralSymbol> stack;
-        List<Integer> indexes;
-        int index;
+        Set<GeneralSymbol> firstTemp; //Conjunto de símbolos temporário
+        Collection<Production> rules = g.getProductions(); // regras da gramática
+        List<GeneralSymbol> listToDo; //Lista dos símbolos a serem avaliados
+        List<Integer> indexes; //Lista dos indexes relacionados àquele símbolo
+        int index; //Index que eu estou olhando atualmente na listToDo e indexes
 
         for (Production e: rules) {
             firstTemp = new HashSet<>();
-            stack = new ArrayList<>();
+            listToDo = new ArrayList<>();
             indexes = new ArrayList<>();
-            stack.add(e.getNonterminal());
+            listToDo.add(e.getNonterminal()); //Adicionando o símbolo inicial
             indexes.add(0);
-            stack.add(e.getProduction().get(0));
+            listToDo.add(e.getProduction().get(0)); //Adicionando o primeiro símbolo da lista de produção
             indexes.add(0);
             index = 1;
-            while (!(index >= stack.size())) {
-                if (stack.get(index) instanceof Nonterminal) {
-                    if (!first.get(stack.get(index)).isEmpty()){
-                        firstTemp.addAll(first.get(e.getNonterminal()));
+            while (!(index >= listToDo.size())) {
+                if (listToDo.get(index) instanceof Nonterminal) {
+                    if (!first.get(listToDo.get(index)).isEmpty()){ //Checo se existe first do símbolo que estou a visualizar na listToDo
+                        firstTemp.addAll(first.get(e.getNonterminal())); //Caso tenha, adiciono todos os símbolos ao meu first temporário
                     } else {
                         for (Production p : rules) {
-                            if (p.getNonterminal() == stack.get(index)) {
-                                stack.add(p.getProduction().get(0));
+                            if (p.getNonterminal() == listToDo.get(index)) { //Caso o símbolo de produção (lado esquerdo) seja o que estou olhando agora na listToDo
+                                listToDo.add(p.getProduction().get(0)); //Adiciono o primeiro símbolo daquela regra a minha lista
                                 indexes.add(0);
                             }
                         }
                     }
                     index++;
                 } else {
-                    if (!first.get(e.getNonterminal()).isEmpty()){
+                    if (!first.get(e.getNonterminal()).isEmpty()){ //Caso meu nãoterminal do lado esquerdo atual tenha first, eu adiciono ele ao meu first temporário.
                         firstTemp.addAll(first.get(e.getNonterminal()));
                     }
-                    firstTemp.add(stack.get(index));
+                    firstTemp.add(listToDo.get(index)); //Adiciono o símbolo especial ou terminal que eu achei no meu first temporário
                     index++;
-                    if (index >= stack.size()) {
-                        if (firstTemp.contains(SpecialSymbol.EPSILON)) {
+                    if (index >= listToDo.size()) { //Caso eu tenha passado por toda listToDo
+                        if (firstTemp.contains(SpecialSymbol.EPSILON)) { //Caso meu first temporário contenha EPSILON
                             GeneralSymbol aux;
                             int auxiliary;
-                            do {
-                                aux = stack.remove(stack.size()-1);
+                            do { //Removo intens da lista e volto meu index enquanto eu não achar um não terminal
+                                aux = listToDo.remove(listToDo.size()-1);
                                 auxiliary = indexes.remove(indexes.size()-1);
                                 index--;
                             } while (!(aux instanceof Nonterminal));
-                            if (aux != e.getNonterminal()) {
+                            if (aux != e.getNonterminal()) { //Caso eu não tenha voltado até a regra inicial (voltar à regra inicial indica que epsilon faz parte do first)
                                 for (Production p : rules) {
-                                    if (auxiliary < p.getProduction().size() && p.getProduction().get(auxiliary) == aux) {
+                                    if (auxiliary < p.getProduction().size() && p.getProduction().get(auxiliary) == aux) { //Checo se o index é menor que o tmanho da produção
                                         auxiliary++;
-                                        aux = p.getNonterminal();
+                                        aux = p.getNonterminal(); //atribuo à aux o não terminal daquela produção
                                         for (Production h : rules) {
-                                            if (h.getNonterminal() == aux) {
+                                            if (h.getNonterminal() == aux) {//procuro por uma produção que tenha aux como não terminal para adicionar aos possiveis firsts
                                                 if (auxiliary >= h.getProduction().size()) {
-                                                    stack.clear();
-                                                    indexes.clear();
                                                     break;
                                                 } else {
                                                     firstTemp.remove(SpecialSymbol.EPSILON);
-                                                    stack.add(h.getProduction().get(auxiliary));
+                                                    listToDo.add(h.getProduction().get(auxiliary));
                                                     indexes.add(auxiliary);
                                                 }
                                             }
@@ -77,17 +75,12 @@ public final class SetGenerator {
                                     }
                                 }
                             }
-                        } else {
-                            stack.clear();
-                            indexes.clear();
                         }
                     }
                 }
             }
             first.put(e.getNonterminal(),firstTemp);
         }
-
-        //System.out.println(first);
 
         return first;
 
@@ -103,73 +96,66 @@ public final class SetGenerator {
 
         Set<GeneralSymbol> followTemp;
         Collection<Production> rules = g.getProductions();
-        List<Production> stack;
+        List<Production> listToDo;
         List<Integer> indexes;
         int index;
 
-        //System.out.println(rules);
-
         for (Production e : rules) {
             followTemp = new HashSet<>();
-            stack = new ArrayList<>();
+            listToDo = new ArrayList<>();
             indexes = new ArrayList<>();
             index =0;
 
             if (g.getStartSymbol()==e.getNonterminal()){
-                followTemp.add(SpecialSymbol.EOF);
+                followTemp.add(SpecialSymbol.EOF); //Caso seja o símbolo inicial adiciono EOF ao follow
             }
 
             for (Production p : rules) {
-                if (p.getProduction().contains(e.getNonterminal())){
+                if (p.getProduction().contains(e.getNonterminal())){ //Para cada produção que possui àquele não terminal em questão eu adiciono à listToDo
                     indexes.add(p.getProduction().indexOf(e.getNonterminal()));
-                    stack.add(p);
+                    listToDo.add(p);
                 }
             }
 
-            while (!(index >= stack.size())) {
-                if (indexes.get(index) >= (stack.get(index).getProduction().size() -1)) {
-                    if ((stack.get(index).getProduction().get(indexes.get(index)) != stack.get(index).getNonterminal())){
-                        if (follow.get(stack.get(index).getNonterminal()).isEmpty()) {
-                            for (Production p : rules) {
-                                if (p.getProduction().contains(stack.get(index).getNonterminal())){
-                                    indexes.add(p.getProduction().indexOf(stack.get(index).getNonterminal()));
-                                    stack.add(p);
+            while (!(index >= listToDo.size())) {
+                if (indexes.get(index) >= (listToDo.get(index).getProduction().size() -1)) {//Caso o símbolo qu estou olhando seja o último da produção
+                    if (!(listToDo.get(index).getProduction().get(indexes.get(index)) instanceof Nonterminal)) {
+                        followTemp.add(listToDo.get(index).getProduction().get(indexes.get(index)));//Caso o último símbolo não seja um não terminal eu o adiciono ao follow
+                    } else {
+                        if ((listToDo.get(index).getProduction().get(indexes.get(index)) != listToDo.get(index).getNonterminal())){//Caso o não terminal que eu eteja tratando não seja o não terminal do lado esquerdo da produção
+                            if (follow.get(listToDo.get(index).getNonterminal()).isEmpty()) {
+                                for (Production p : rules) { //Caso meu não terminal do lado esquerdo não tenha o follow já calculado eu o adiciono a listToDo
+                                    if (p.getProduction().contains(listToDo.get(index).getNonterminal())){
+                                        indexes.add(p.getProduction().indexOf(listToDo.get(index).getNonterminal()));
+                                        listToDo.add(p);
+                                    }
                                 }
+                            } else { //Caso possua follow, adiciono ao meu follow temporário.
+                                followTemp.addAll(follow.get(listToDo.get(index).getNonterminal()));
                             }
-                        } else {
-                            followTemp.addAll(follow.get(stack.get(index).getNonterminal()));
                         }
                     }
-                } else {
-                    GeneralSymbol auxiliary = stack.get(index).getProduction().get(indexes.get(index) + 1);
+                } else {//Capturo o próximo símbolo depois do que quero saber o follow e diferencio se é ou não um não terminal
+                    GeneralSymbol auxiliary = listToDo.get(index).getProduction().get(indexes.get(index) + 1);
                     if (auxiliary instanceof Nonterminal) {
-                        if (first.get(auxiliary).isEmpty()) {
-                            for (Production p : rules) {
-                                if (p.getProduction().contains(auxiliary)){
-                                    indexes.add(p.getProduction().indexOf(auxiliary));
-                                    stack.add(p);
-                                }
-                            }
-                        } else {
-                            if (first.get(auxiliary).contains(SpecialSymbol.EPSILON)) {
-                                if ((indexes.get(index)+2) > (stack.get(index).getProduction().size() -1)) {
-                                    for (Production p : rules) {
-                                        if (p.getProduction().contains(stack.get(index).getNonterminal())){
-                                            indexes.add(p.getProduction().indexOf(stack.get(index).getNonterminal()));
-                                            stack.add(p);
-                                        }
+                        if (first.get(auxiliary).contains(SpecialSymbol.EPSILON)) {//Caso seja um não terminal, checo se possui epsilon e caso tenha procuro o first do próximo símbolo também o adicionando à listToDo
+                            if ((indexes.get(index)+2) > (listToDo.get(index).getProduction().size() -1)) {
+                                for (Production p : rules) {
+                                    if (p.getProduction().contains(listToDo.get(index).getNonterminal())){
+                                        indexes.add(p.getProduction().indexOf(listToDo.get(index).getNonterminal()));
+                                        listToDo.add(p);
                                     }
-                                } else {
-                                    indexes.add(indexes.get(index) + 1);
-                                    stack.add(stack.get(index));
                                 }
-                                followTemp.addAll(first.get(auxiliary));
-                                followTemp.remove(SpecialSymbol.EPSILON);
                             } else {
-                                followTemp.addAll(first.get(auxiliary));
+                                indexes.add(indexes.get(index) + 1);
+                                listToDo.add(listToDo.get(index));
                             }
+                            followTemp.addAll(first.get(auxiliary));
+                            followTemp.remove(SpecialSymbol.EPSILON);
+                        } else {
+                            followTemp.addAll(first.get(auxiliary));
                         }
-                    } else {
+                    } else {//Caso não seja um não terminal, eu apenas o adiciono ao follow
                         followTemp.add(auxiliary);
                     }
                 }
@@ -178,8 +164,6 @@ public final class SetGenerator {
 
             follow.put(e.getNonterminal(),followTemp);
         }
-
-        //System.out.println(follow);
 
         return follow;
     }
